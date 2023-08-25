@@ -1,0 +1,62 @@
+cmake_minimum_required(VERSION 3.19)
+project(nef_to_halfspace_tree)
+
+option(ENABLE_TESTS "Enable tests" ON)
+
+include(CTest)
+
+if (MSVC_VERSION GREATER 1600)
+    set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+endif()
+
+if (MSVC)
+	add_definitions(/bigobj)
+endif()
+
+# Set C++ standard
+set(CMAKE_CXX_STANDARD 17)
+
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_library(nef_to_halfspace_tree INTERFACE include/nef_to_halfspace_tree.h include/test_utils.h)
+target_include_directories (nef_to_halfspace_tree INTERFACE ${GMP_INCLUDE_DIR} ${MPFR_INCLUDE_DIR} ${CGAL_INCLUDE_DIR} ${Eigen3_DIR} ${BOOST_ROOT} $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+
+find_library(libGMP REQUIRED NAMES gmp mpir PATHS ${GMP_LIBRARY_DIR} NO_DEFAULT_PATH)
+find_library(libMPFR REQUIRED NAMES mpfr PATHS ${MPFR_LIBRARY_DIR} NO_DEFAULT_PATH)
+target_link_libraries(nef_to_halfspace_tree INTERFACE ${libGMP} ${libMPFR})
+
+if (ENABLE_TESTS)
+
+# Download and unpack googletest at configure time
+configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
+execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+  RESULT_VARIABLE result
+  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
+if(result)
+  message(FATAL_ERROR "CMake step for googletest failed: ${result}")
+endif()
+execute_process(COMMAND ${CMAKE_COMMAND} --build .
+  RESULT_VARIABLE result
+  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
+if(result)
+  message(FATAL_ERROR "Build step for googletest failed: ${result}")
+endif()
+
+# Prevent overriding the parent project's compiler/linker
+# settings on Windows
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+# Add googletest directly to our build. This defines
+# the gtest and gtest_main targets.
+add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
+                 ${CMAKE_BINARY_DIR}/googletest-build
+                 EXCLUDE_FROM_ALL)
+                                  
+file(GLOB test_filenames tests/test_*.cpp)
+foreach(filename ${test_filenames})
+    get_filename_component(test_name ${filename} NAME_WE)
+    add_executable("${test_name}" ${filename})
+    add_test(NAME "${test_name}" COMMAND "${test_name}")
+    target_link_libraries("${test_name}" PRIVATE nef_to_halfspace_tree gtest_main)
+endforeach()
+endif()
