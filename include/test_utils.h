@@ -5,23 +5,6 @@
 #include <CGAL/Polyhedron_3.h>
 
 template <typename Kernel>
-void createCube(CGAL::Polyhedron_3<Kernel>& P, double d) {
-	typedef CGAL::Point_3<Kernel> Point;
-	typedef std::array<CGAL::Point_3<Kernel>, 4> Quad;
-
-	Quad bottom = { {
-		Point(-d, -d, -d),
-		Point(+d, -d, -d),
-		Point(+d, +d, -d),
-		Point(-d, +d, -d)
-	} };
-
-	Kernel::Vector_3 V(0, 0, d * 2);
-
-	extrude(bottom, V, P);
-}
-
-template <typename Kernel>
 void rotatePolyhedron(CGAL::Polyhedron_3<Kernel>& P, double angle, CGAL::Vector_3<Kernel> axis) {
 	axis = axis / std::sqrt(CGAL::to_double(axis.squared_length()));
 

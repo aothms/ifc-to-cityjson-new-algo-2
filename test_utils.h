@@ -64,4 +64,55 @@ void createCube(CGAL::Polyhedron_3<Kernel>& P, double d) {
 	extrude(bottom, V, P);
 }
 
+
+void rotatePolyhedron(Polyhedron& P, double angle, Kernel::Vector_3 axis) {
+	axis = axis / std::sqrt(CGAL::to_double(axis.squared_length()));
+
+	double c = std::cos(angle);
+	double s = std::sin(angle);
+
+	// Compute the 4x4 rotation matrix
+	CGAL::Aff_transformation_3<Kernel> rotation_matrix(
+		c + (1 - c) * axis.x() * axis.x(),
+		(1 - c) * axis.x() * axis.y() - s * axis.z(),
+		(1 - c) * axis.x() * axis.z() + s * axis.y(),
+		0.0,
+		(1 - c) * axis.y() * axis.x() + s * axis.z(),
+		c + (1 - c) * axis.y() * axis.y(),
+		(1 - c) * axis.y() * axis.z() - s * axis.x(),
+		0.0,
+		(1 - c) * axis.z() * axis.x() - s * axis.y(),
+		(1 - c) * axis.z() * axis.y() + s * axis.x(),
+		c + (1 - c) * axis.z() * axis.z(),
+		0.0
+	);
+
+	for (auto it = P.vertices_begin(); it != P.vertices_end(); ++it) {
+		it->point() = rotation_matrix.transform(it->point());
+	}
+}
+
+
+template <typename T>
+void scalePolyhedron(Polyhedron& P, T sx, T sy, T sz) {
+	CGAL::Aff_transformation_3<Kernel> scale(
+		sx, 0, 0, 0,
+		0, sy, 0, 0,
+		0, 0, sz, 0);
+	for (auto it = P.vertices_begin(); it != P.vertices_end(); ++it) {
+		it->point() = scale.transform(it->point());
+	}
+}
+
+void translatePolyhedron(Polyhedron& P, Kernel::Vector_3 v) {
+	CGAL::Aff_transformation_3<Kernel> rotation_matrix(
+		CGAL::TRANSLATION, v
+	);
+
+	for (auto it = P.vertices_begin(); it != P.vertices_end(); ++it) {
+		it->point() = rotation_matrix.transform(it->point());
+	}
+}
+
+
 #endif

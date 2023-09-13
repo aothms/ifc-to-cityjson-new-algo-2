@@ -17,8 +17,8 @@ TEST(HalfspaceTreeGeneration, Cube) {
 	createCube(cube1, 1.0);
 	createCube(cube2, 1.0);
 
-	translatePolyhedron(cube1, Kernel::Vector_3(0.001, 0.001, 0));
-	rotatePolyhedron(cube2, 0.01, Kernel::Vector_3(0, 0, 1.0));
+	translatePolyhedron(cube1, Kernel::Vector_3(1.e-5, 1.e-5, 0));
+	rotatePolyhedron(cube2, 1.e-4, Kernel::Vector_3(0, 0, 1.0));
 
 	Nef_polyhedron cube_nef(cube);
 	Nef_polyhedron cube1_nef(cube1);
@@ -27,7 +27,7 @@ TEST(HalfspaceTreeGeneration, Cube) {
 	std::list<Nef_polyhedron*> operands = { &cube_nef, &cube1_nef, &cube2_nef };
 
 	{
-		// standard, apparently the result is 40 verts
+		// apparently the result is 40 verts
 
 		CGAL::Nef_nary_union_3<Nef_polyhedron> builder;
 		for (auto& p : operands) {
@@ -39,6 +39,9 @@ TEST(HalfspaceTreeGeneration, Cube) {
 	}
 
 	{
+		// snapping of half spaces prior to union results
+		// in only 8 vertices
+
 		std::list<Kernel::Plane_3> planes;
 		std::list<std::unique_ptr<halfspace_tree<Kernel>>> trees, snapped;
 
@@ -48,7 +51,7 @@ TEST(HalfspaceTreeGeneration, Cube) {
 			trees.back()->accumulate(planes);
 		}
 
-		auto plane_map = snap_halfspaces(planes, 0.5);
+		auto plane_map = snap_halfspaces(planes, 0.01);
 		for (auto& x : trees) {
 			snapped.push_back(std::move(x->map(plane_map)));
 		}
